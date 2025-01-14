@@ -48,11 +48,11 @@ export class WinSequence {
         `;
 
         const restart = document.createElement('div');
-        restart.textContent = 'You Won!';
+        restart.textContent = 'You Got Out...';
         restart.style.cssText = `
             font-family: 'PixelOperatorMono';
-            font-size: 1.6rem;
-            margin-bottom: 1rem;
+            font-size: 2.0rem;
+            margin-bottom: 2rem;
             cursor: pointer;
         `;
         restart.addEventListener('click', () => window.location.reload());

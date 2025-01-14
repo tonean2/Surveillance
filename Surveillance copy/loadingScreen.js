@@ -71,11 +71,11 @@ export class LoadingScreen {
         const surveillanceText = document.createElement('div');
         surveillanceText.textContent = 'Surveillance';
         surveillanceText.style.cssText = `
-            color: white;
+            color: rgba(137, 145, 124, 1.0);
             font-size: 50px;
             font-family: 'Pixel Operator', monospace;
             opacity: 0;
-            transition: opacity 7s ease;
+            transition: opacity 4s ease;
         `;
         this.container.appendChild(surveillanceText);
     
@@ -173,7 +173,7 @@ export class LoadingScreen {
             Crack the right four puzzles to uncover the numbers needed to unlock the door and escape. 
             But beware—some of these codes are decoys designed to lead you away from the right ones. 
             Can you outsmart your way to freedom?<br><br>
-            Press 'P' to pause and 'AWSD' to move.<br><br>
+            Press 'P' to pause<br><br>
             And forgot to mention--don't let your battery run down.
         `;
         helpText.style.cssText = `
@@ -217,10 +217,10 @@ export class LoadingScreen {
         }, 100);
     
         // Add menu buttons
-        const buttonTexts = ['Hi', 'Settings', 'Help'];
+        const buttonTexts = ['Start', 'Settings', 'Help'];
         buttonTexts.forEach(text => {
             const button = this.createButton(text, () => {
-                if (text === 'Hi') {
+                if (text === 'Start') {
                     this.showGameSelect();
                 } else if (text === 'Help') {
                     this.showHelpScreen();

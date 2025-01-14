@@ -1,6 +1,8 @@
 //syntaxHighlighter.js
 // Keep editor instance in global scope
 let editor = null;
+let changeTimeout = null;
+
 
 function loadAndHighlightCode() {
     const codeBlock = document.getElementById('codeBlock');
@@ -52,13 +54,22 @@ let holeY = 20; // Fixed Y position for the hole
 
         // Monitor code changes
         editor.on('change', () => {
-            const currentCode = editor.getValue();
-            console.log('Updated code:', currentCode);
-            
-            // Notify game of code change
-            if (window.game && typeof window.game.handleCodeChange === 'function') {
-                window.game.handleCodeChange(currentCode);
+            // Clear any pending timeout
+            if (changeTimeout) {
+                clearTimeout(changeTimeout);
             }
+        
+            // Set a new timeout
+            changeTimeout = setTimeout(() => {
+                const currentCode = editor.getValue();
+                
+                // Only notify game if relevant lines have changed
+                const relevantChanges = hasRelevantChanges(currentCode);
+                
+                if (relevantChanges && window.game && typeof window.game.handleCodeChange === 'function') {
+                    window.game.handleCodeChange(currentCode);
+                }
+            }, 250); // 250ms debounce
         });
     }
 
@@ -68,6 +79,18 @@ let holeY = 20; // Fixed Y position for the hole
             editor.refresh();
         }
     }, 5);
+}
+
+function hasRelevantChanges(code) {
+    const lines = code.split('\n');
+    return lines.some(line => {
+        const trimmed = line.trim();
+        return trimmed === 'ballX = holeX;' ||
+               trimmed === 'ballY = holeY;' ||
+               trimmed === '//The first number is' ||
+               trimmed === '4' ||
+               trimmed === '//4';
+    });
 }
 
 // Add custom styles with higher specificity and all transparent backgrounds

@@ -5,7 +5,6 @@ const dialogBox = document.getElementById('dialogBox');
 
 import { dialogManager } from './dialog.js';  // Add this here
 import ImageOverlay from './imageOverlay.js';
-import { obstacles, checkCollision, drawObstacles } from './collisions.js';
 import { ScreenEffects } from './screenEffects.js';
 import { WinSequence } from './winSequence.js';
 import { BatteryDeath } from './batteryDeath.js';
@@ -73,7 +72,6 @@ class Game {
         
         this.paused = false;
         this.dialogPaused = false;
-        this.playerAnimationPaused = false;
         this.pauseMenu = document.getElementById('pauseMenu');
         this.initialized = false;
         this.imageOverlay = new ImageOverlay();
@@ -89,42 +87,6 @@ class Game {
         this.maxDots = 1;
         this.activeDots = 0;
         this.dots = new Set();
-        this.player = {
-            x: 535,
-            y: 300,
-            width: 364,
-            height: 352,
-            speed: 5,
-            currentSprite: 'idle_front',
-            sprites: {
-                idle_front: new Image(),
-                idle_back: new Image(),
-                walk_front: new Image(),
-                walk_back: new Image(),
-                walk_right: new Image(),
-                walk_left: new Image()
-            },
-            // Add canvas for drawing frozen frames
-            canvas: document.createElement('canvas'),
-            ctx: null
-        };
-        this.player.canvas.width = this.player.width;
-        this.player.canvas.height = this.player.height;
-        this.player.ctx = this.player.canvas.getContext('2d');
-        this.player.sprites.idle_front.src = './sprite/Will.gif';
-        this.player.sprites.idle_back.src = './sprite/Will_back.gif';
-        this.player.sprites.walk_front.src = './sprite/William_walk_front.gif';
-        this.player.sprites.walk_back.src = './sprite/William_walk_back.gif';
-        this.player.sprites.walk_right.src = './sprite/William_side_walk_right.gif';
-        this.player.sprites.walk_left.src = './sprite/William_side_walk_left.gif';
-    
-        
-        // Add preload for all sprites
-        Object.values(this.player.sprites).forEach(sprite => {
-            sprite.onload = () => console.log('Sprite loaded:', sprite.src);
-        });
-
-
         this.overlayImages = [
             {
                 id: 'ball',
@@ -159,13 +121,6 @@ class Game {
                 image: new Image()
             },
             overlays: new Map()
-        };
-
-        this.keys = {
-            w: false,
-            a: false,
-            s: false,
-            d: false
         };
 
         // Bind methods to this context
@@ -395,10 +350,7 @@ class Game {
             
             this.hasWon = true;
             this.winSequence.start();
-            
-            // Stop player movement
-            this.playerAnimationPaused = true;
-            
+                        
             // Hide other UI elements
             const uiElements = [
                 document.getElementById('battery-container'),
@@ -502,15 +454,23 @@ class Game {
 
     handleCodeChange(code) {
         const lines = code.split('\n');
+        
+        // Check for ball position changes
         const hasUncommentedBallX = lines.some(line => 
             line.trim() === 'ballX = holeX;'
         );
         const hasUncommentedBallY = lines.some(line => 
             line.trim() === 'ballY = holeY;'
         );
-        const hasUncommentedFour = lines.some(line =>
-            line.trim() === '4' || line.includes('//4')
-        );
+        
+        // More precise check for the "4" revelation
+        const numberRevealCheck = lines.reduce((acc, line, index) => {
+            if (line.trim() === '//The first number is' && 
+                lines[index + 1]?.trim() === '4') {  // Note: removed the '//' requirement
+                return true;
+            }
+            return acc;
+        }, false);
     
         // Handle animation sequence
         if (hasUncommentedBallX && hasUncommentedBallY && 
@@ -522,7 +482,7 @@ class Game {
         }
     
         // Handle number 4 reveal
-        if (hasUncommentedFour && !this.squareOneAnimated) {
+        if (numberRevealCheck && !this.squareOneAnimated) {
             this.animateFirstSquare();
         }
     }
@@ -532,20 +492,6 @@ class Game {
         if (this.initialized) return;
         console.log('Game initializing...');
         this.setupPauseMenuListeners();
-
-        // Create player element with correct initial sprite
-        const playerElement = document.createElement('img');
-        playerElement.src = this.player.sprites.idle_front.src;
-        playerElement.id = 'player';
-        playerElement.style.cssText = `
-            position: absolute;
-            width: ${this.player.width}px;
-            height: ${this.player.height}px;
-            left: ${this.player.x}px;
-            top: ${this.player.y}px;
-            z-index: 1;
-        `;
-        
 
         const yellowRect = document.getElementById('yellowRectangle');
         if (yellowRect) {
@@ -586,9 +532,6 @@ class Game {
                 window.showDialog6();
             });
         }
-
-        document.querySelector('.crt-container').appendChild(playerElement);
-        this.playerElement = playerElement;
         // Make instance globally available
         window.game = this;
         // Create text overlay container
@@ -927,30 +870,7 @@ class Game {
             this.pauseMenu.style.display = 'flex';
             
             // Freeze the current frame of the GIF
-        if (this.playerElement) {
-            // Set the canvas dimensions to match desired size
-            this.player.canvas.width = 364;
-            this.player.canvas.height = 352;
-            
-            // Store current position
-            const currentLeft = this.playerElement.style.left;
-            const currentTop = this.playerElement.style.top;
-            
-            // Draw the current frame to our canvas, scaling it to the desired dimensions
-            this.player.ctx.drawImage(this.playerElement, 0, 0, 364, 352);
-            
-            // Store the original src
-            this.playerElement.dataset.originalSrc = this.playerElement.src;
-            
-            // Replace the GIF with the frozen canvas image
-            this.playerElement.src = this.player.canvas.toDataURL();
-            
-            // Maintain the position
-            this.playerElement.style.left = currentLeft;
-            this.playerElement.style.top = currentTop;
-            this.playerElement.style.width = '364px';
-            this.playerElement.style.height = '352px';
-        }
+
             
             // Pause all dots
             this.dots.forEach(dot => {
@@ -972,10 +892,6 @@ class Game {
             // Resume game
             this.pauseMenu.style.display = 'none';
             
-            // Restore the original GIF
-            if (this.playerElement && this.playerElement.dataset.originalSrc) {
-                this.playerElement.src = this.playerElement.dataset.originalSrc;
-            }
             
             // Resume all dots
             this.dots.forEach(dot => {
@@ -1010,11 +926,6 @@ class Game {
     setupPauseMenuListeners() {
         document.getElementById('resumeOption').addEventListener('click', () => {
             this.togglePause();
-        });
-    
-        document.getElementById('saveOption').addEventListener('click', () => {
-            // Add save functionality if needed
-            console.log('Save game');
         });
     
         document.getElementById('exitOption').addEventListener('click', () => {
@@ -1243,66 +1154,6 @@ handleMouseMove(e) {
         
     }
 
-    updatePlayerPosition() {
-        let newSprite = this.player.currentSprite;
-        const moving = this.keys.w || this.keys.a || this.keys.s || this.keys.d;
-    
-        // Determine the new sprite based on movement
-        if (this.keys.d) {
-            newSprite = 'walk_right';
-        } else if (this.keys.a) {
-            newSprite = 'walk_left';
-        } else if (this.keys.w) {
-            newSprite = 'walk_back';
-        } else if (this.keys.s) {
-            newSprite = 'walk_front';
-        } else {
-            newSprite = this.player.currentSprite.includes('back') ? 'idle_back' : 'idle_front';
-        }
-    
-        // Only update the sprite if it changed
-        if (newSprite !== this.player.currentSprite) {
-            this.player.currentSprite = newSprite;
-            this.playerElement.src = this.player.sprites[newSprite].src;
-        }
-    
-        // Calculate new position
-        const newX = this.player.x + 
-            (this.keys.d ? this.player.speed : 0) - 
-            (this.keys.a ? this.player.speed : 0);
-        const newY = this.player.y + 
-            (this.keys.s ? this.player.speed : 0) - 
-            (this.keys.w ? this.player.speed : 0);
-        
-        // Create a smaller collision box for the player (adjust these values as needed)
-        const newPlayerRect = {
-            x: newX + this.player.width * 0.4,  // Offset to center of sprite
-            y: newY + this.player.height * 0.6,  // Offset to feet area
-            width: this.player.width * 0.2,      // Much smaller collision width
-            height: this.player.height * 0.2      // Much smaller collision height
-        };
-        
-        // Check for collisions with obstacles
-        let collisionDetected = false;
-        for (const obstacle of obstacles) {
-            if (checkCollision(newPlayerRect, obstacle)) {
-                collisionDetected = true;
-                break;
-            }
-        }
-
-        if (!collisionDetected) {
-            if (newX >= 0 && newX + this.player.width <= window.innerWidth) {
-                this.player.x = newX;
-                this.playerElement.style.left = `${newX}px`;
-            }
-            if (newY >= 0 && newY + this.player.height <= window.innerHeight) {
-                this.player.y = newY;
-                this.playerElement.style.top = `${newY}px`;
-            }
-        }
-    }
-
     getCirclePosition() {
         return CIRCLE_POSITIONS.map(pos => ({
             x: canvas.width * pos.xPercent,
@@ -1322,7 +1173,7 @@ handleMouseMove(e) {
 
     updateBattery() {
         const currentTime = Date.now();
-        const minutesPassed = Math.floor((currentTime - this.gameStartTime) / (60 * 1000));
+        const minutesPassed = Math.floor((currentTime - this.gameStartTime) / (120 * 1000));
         const newBatteryLevel = BATTERY_CONFIG.segments - minutesPassed;
         
         if (newBatteryLevel !== this.batteryLevel) {
@@ -1458,7 +1309,6 @@ handleMouseMove(e) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         this.applyCRTEffect(ctx);
     
-        drawObstacles(ctx);
         
         // Handle background state
         if (this.backgroundState.currentState === 'animation') {
@@ -1533,7 +1383,6 @@ handleMouseMove(e) {
                     }
                 }
             
-                this.updatePlayerPosition();
                 this.drawGame();
                 this.updateBattery();
                 this.drawBattery();

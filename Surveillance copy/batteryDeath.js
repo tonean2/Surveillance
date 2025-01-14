@@ -64,31 +64,15 @@ export class BatteryDeath {
             transition: opacity 1s ease-in;
             transition-delay: 1.5s;
         `;
-        restartBtn.addEventListener('click', () => window.location.reload());
-
-        // Create exit button
-        const exitBtn = document.createElement('div');
-        exitBtn.textContent = 'Exit';
-        exitBtn.style.cssText = `
-            color: rgba(137, 145, 124, 1);
-            font-family: 'PixelOperatorMono';
-            font-size: 2rem;
-            cursor: pointer;
-            z-index: 1001;
-            opacity: 0;
-            transition: opacity 1s ease-in;
-            transition-delay: 2s;
-        `;
-        exitBtn.addEventListener('click', () => window.location.href = 'tv.html');
+        restartBtn.addEventListener('click', () => window.location.href = 'tv.html');
 
         // Add elements to container
         this.container.appendChild(this.fadeOverlay);
         this.container.appendChild(message);
         this.container.appendChild(restartBtn);
-        this.container.appendChild(exitBtn);
 
         // Store references to elements that need opacity changes
-        this.elements = [message, restartBtn, exitBtn];
+        this.elements = [message, restartBtn];
     }
 
     show() {
