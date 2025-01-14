@@ -1347,7 +1347,7 @@ handleMouseMove(e) {
         for (const circlePos of circlePositions) {
             ctx.beginPath();
             ctx.arc(circlePos.x, circlePos.y, circlePos.radius, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255, 0, 0, 1.0)';
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.0)';
             ctx.fill();
             ctx.closePath();
         }

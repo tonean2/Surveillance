@@ -5,7 +5,7 @@ class DialogAudioManager {
     }
 
     initialize() {
-        this.typingSound = new Audio('./audio/typing.mp3');
+        this.typingSound = new Audio('./audio/typing_3.mp3');
         this.typingSound.volume = 0.5; // Adjust volume as needed
         this.typingSound.loop = true;
         this.initialized = true;

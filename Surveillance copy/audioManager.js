@@ -1,6 +1,6 @@
 class AudioManager {
     constructor() {
-        this.backgroundMusic = new Audio('./audio/background_music2.mp3');
+        this.backgroundMusic = new Audio('./audio/background_music3.mp3');
         this.backgroundMusic.loop = true;
         this.backgroundMusic.volume = 0.5;
         this.isMuted = false;

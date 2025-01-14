@@ -2,6 +2,13 @@ export class LoadingScreen {
     constructor() {
         console.log('LoadingScreen constructor called');
         this.initialized = false;
+        this.backgroundMusic = new Audio('./audio/background_music3.mp3');
+        // Add warning audio files
+        this.warningAudios = [
+            new Audio('./audio/1Who_goes_there.mp3'),
+            new Audio('./audio/2Don\'t_enter.mp3'),
+            new Audio('./audio/3Warn_Ya.mp3')
+        ];
         this.container = null;
         this.buttons = [];
         this.backgroundImage = new Image();
@@ -13,10 +20,55 @@ export class LoadingScreen {
         this.title = null;
         this.gridContainer = null;
         this.gameContainer = null;
+        this.buttonClickSound = new Audio('./audio/button_click.mp3');
+        this.warningTimer = null;
+        
+        // Set initial volumes
+        this.sfxVolume = 1.0;
+        this.bgmVolume = 1.0;
+        this.updateAllVolumes();
+    }
+
+    // Add new method to play random warnings
+    playRandomWarning() {
+        const randomIndex = Math.floor(Math.random() * this.warningAudios.length);
+        this.warningAudios[randomIndex].play();
+    }
+    updateAllVolumes() {
+        // Update SFX volumes
+        this.warningAudios.forEach(audio => {
+            audio.volume = this.sfxVolume;
+        });
+        this.buttonClickSound.volume = this.sfxVolume;
+
+        // Update background music volume
+        this.backgroundMusic.volume = this.bgmVolume;
+    }
+
+    // Add method to schedule random warnings
+    scheduleRandomWarnings() {
+        const scheduleNext = () => {
+            // Random time between 15 and 45 seconds
+            const nextWarningTime = 15000 + Math.random() * 30000;
+            this.warningTimer = setTimeout(() => {
+                this.playRandomWarning();
+                scheduleNext(); // Schedule next warning
+            }, nextWarningTime);
+        };
+        scheduleNext();
     }
 
     initialize(parentElement) {
         console.log('LoadingScreen initialize called');
+        this.backgroundMusic.loop = true;
+        this.backgroundMusic.play();
+        
+        // Add this line right here to play the warning immediately
+        this.warningAudios[0].play();  // This plays "Who goes there" specifically
+        
+        // Start random warnings (keeping this for subsequent warnings)
+        this.scheduleRandomWarnings();
+        
         if (this.initialized) return;
         
         // Create the game container but keep it hidden initially
@@ -87,6 +139,110 @@ export class LoadingScreen {
             this.showMainMenu(); // Proceed to main menu after fade-in
         }, 2000);
     }
+
+    showSettingsScreen() {
+        this.clearScreen();
+        this.currentScreen = 'settings';
+
+        const settingsContainer = document.createElement('div');
+        settingsContainer.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        `;
+
+        // Create title
+        const title = document.createElement('div');
+        title.textContent = 'Settings';
+        title.style.cssText = `
+            color: rgba(137, 145, 124, 1.0);
+            font-size: 35px;
+            font-family: 'Pixelify Sans', sans-serif;
+            margin-bottom: 20px;
+        `;
+
+        // Create volume controls container
+        const volumeControls = document.createElement('div');
+        volumeControls.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        `;
+
+        // Background Music Volume Control
+        const bgmContainer = document.createElement('div');
+        bgmContainer.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        `;
+
+        const bgmLabel = document.createElement('label');
+        bgmLabel.textContent = 'Background Music';
+        bgmLabel.style.cssText = `
+            color: rgba(137, 145, 124, 1.0);
+            font-family: 'Pixel Operator', monospace;
+            font-size: 20px;
+            min-width: 150px;
+        `;
+
+        const bgmSlider = document.createElement('input');
+        bgmSlider.type = 'range';
+        bgmSlider.min = '0';
+        bgmSlider.max = '100';
+        bgmSlider.value = this.bgmVolume * 100;
+        bgmSlider.style.cssText = `
+            width: 200px;
+            accent-color: rgba(137, 145, 124, 1.0);
+        `;
+
+        bgmSlider.addEventListener('input', (e) => {
+            this.bgmVolume = e.target.value / 100;
+            this.updateAllVolumes();
+        });
+
+        // Sound Effects Volume Control
+        const sfxContainer = document.createElement('div');
+        sfxContainer.style.cssText = bgmContainer.style.cssText;
+
+        const sfxLabel = document.createElement('label');
+        sfxLabel.textContent = 'Sound Effects';
+        sfxLabel.style.cssText = bgmLabel.style.cssText;
+
+        const sfxSlider = document.createElement('input');
+        sfxSlider.type = 'range';
+        sfxSlider.min = '0';
+        sfxSlider.max = '100';
+        sfxSlider.value = this.sfxVolume * 100;
+        sfxSlider.style.cssText = bgmSlider.style.cssText;
+
+        sfxSlider.addEventListener('input', (e) => {
+            this.sfxVolume = e.target.value / 100;
+            this.updateAllVolumes();
+        });
+
+        // Append all elements
+        bgmContainer.appendChild(bgmLabel);
+        bgmContainer.appendChild(bgmSlider);
+        sfxContainer.appendChild(sfxLabel);
+        sfxContainer.appendChild(sfxSlider);
+
+        volumeControls.appendChild(bgmContainer);
+        volumeControls.appendChild(sfxContainer);
+
+        settingsContainer.appendChild(title);
+        settingsContainer.appendChild(volumeControls);
+
+        // Create back button
+        const backButton = this.createButton('Back', () => {
+            this.showMainMenu();
+        });
+
+        settingsContainer.appendChild(backButton);
+        this.container.appendChild(settingsContainer);
+    }
     
     clearScreen() {
         // Clear buttons
@@ -144,6 +300,10 @@ export class LoadingScreen {
             if (this.isTransitioning) return;
             this.isTransitioning = true;
 
+            // Play the click sound
+            this.buttonClickSound.currentTime = 0; // Reset audio to start
+            this.buttonClickSound.play();
+
             let blinkCount = 0;
             const blinkInterval = setInterval(() => {
                 button.style.opacity = button.style.opacity === '0' ? '1' : '0';
@@ -177,7 +337,7 @@ export class LoadingScreen {
             And forgot to mention--don't let your battery run down.
         `;
         helpText.style.cssText = `
-            color: white;
+            color: rgba(137, 145, 124, 1.0);
             font-size: 20px; /* Adjust font size as necessary */
             font-family: 'Pixel Operator', monospace; /* Your custom font */
             text-align: center;
@@ -224,6 +384,8 @@ export class LoadingScreen {
                     this.showGameSelect();
                 } else if (text === 'Help') {
                     this.showHelpScreen();
+                } else if (text === 'Settings') {
+                    this.showSettingsScreen();
                 }
             });
             this.buttons.push(button);
@@ -381,6 +543,11 @@ export class LoadingScreen {
         // Add TV turn off effect
         this.container.classList.add('tv-turn-off');
         
+        // Clear warning timer when transitioning
+        if (this.warningTimer) {
+            clearTimeout(this.warningTimer);
+        }
+        
         // Make sure game container is ready but hidden
         const gameContainer = document.querySelector('.crt-container');
         if (gameContainer) {
@@ -399,10 +566,13 @@ export class LoadingScreen {
             
             // Remove the loading screen
             setTimeout(() => {
+                this.backgroundMusic.pause();
+                // Stop all warning sounds
+                this.warningAudios.forEach(audio => audio.pause());
                 this.container.remove();
                 const event = new Event('loadingScreenComplete');
                 document.dispatchEvent(event);
             }, 500);
-        }, 800); // Match this with the animation duration (0.8s = 800ms)
+        }, 800);
     }
 }

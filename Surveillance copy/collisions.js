@@ -1,4 +1,4 @@
-// Define rectangle obstacles with their positions and dimensions
+// Got rid of sprite for player
 export const obstacles = [
     {
         x: 100, // green

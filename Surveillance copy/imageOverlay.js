@@ -7,12 +7,17 @@ class ImageOverlay {
     constructor() {
         // Rectangle position and dimensions - keeping this visible in the game
         this.rect = {
-            x: 200,
-            y: 300,
-            width: 50,
-            height: 50
+            x: window.innerWidth * 0.7,  // Position it at 70% of window width
+            y: window.innerHeight * 0.4,  // Position it at 40% of window height
+            width: 100,   // Increased from 50
+            height: 100   // Increased from 50
         };
-
+        
+        // Store the initial position as percentages
+        this.percentages = {
+            x: this.rect.x / window.innerWidth,
+            y: this.rect.y / window.innerHeight
+        };
         // Overlay state
         this.showOverlay = false;
         
@@ -82,9 +87,14 @@ class ImageOverlay {
     }
 
     draw() {
-        // Draw the red rectangle
-        ctx.fillStyle = 'red';
-        ctx.fillRect(this.rect.x, this.rect.y, this.rect.width, this.rect.height);
+        // Use fixed pixel positions instead of relative ones
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';  // Added transparency (0.7 = 70% opacity)
+        ctx.fillRect(
+            this.rect.x,
+            this.rect.y,
+            this.rect.width,
+            this.rect.height
+        );
     }
 }
 
